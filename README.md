@@ -18,8 +18,8 @@ OpenVeo Moodle Player is a Moodle Media Player plugin which transforms video ref
 - Download zip file corresponding to the latest stable version of the OpenVeo Media Player plugin
 - Unzip it and rename **openveo-moodle-player-\*** directory into **openveo**
 - Move your **openveo** folder into **MOODLE_ROOT_PATH/media/player/** where MOODLE_ROOT_PATH is your Moodle installation folder
-- In your Moodle site (as admin) go to **Settings > Site administration > Notifications**: you should get a message saying the plugin is installed
-- In your Moodle site (as admin) go to **Settings > Site administration > Plugins > Media players > Manage media players** and activate the media player (**Enable**)
+- In your Moodle site (as admin) go to **Site administration > Notifications**: you should get a message saying the plugin is installed
+- In your Moodle site (as admin) go to **Site administration > Plugins > Media players > Manage media players** and activate the media player (**Enable**)
 
 If you experience troubleshooting during installation, please refer to the [Moodle](https://docs.moodle.org) installation plugin documentation.
 
