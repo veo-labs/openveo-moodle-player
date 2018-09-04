@@ -34,7 +34,7 @@ $string['settingsfilefieldslabel'] = 'File fields';
 $string['settingsfilefieldsdescription'] = 'The list of fields of type "editor" and "filemanager" used to upload files. If a reference to an OpenVeo video is added from a field not defined in here, the OpenVeo player won\'t appear. Each line represents a field with four columns: the component holding the field (component), the file area (filearea), the identifier (itemid) or position of the identifier and the position of the file path. Columns are separated by pipes. More information available on <a href="https://github.com/veo-labs/openveo-moodle-player" target="_blank">plugin\'s page</a>.';
 
 // Errors
-$string['mediaplayererror'] = 'The video couln\'t be displayed.';
+$string['errormediaplayer'] = 'The video couln\'t be displayed.';
 
 // Events
 $string['eventplayerdisplayfailed'] = 'OpenVeo media player couldn\'t be displayed.';

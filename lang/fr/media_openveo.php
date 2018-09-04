@@ -34,7 +34,7 @@ $string['settingsfilefieldslabel'] = 'Champs d\'ajout de fichiers';
 $string['settingsfilefieldsdescription'] = 'La liste des champs de formulaire de type "editor" et "filemanager" permettant d\'ajouter des fichiers. Si une réfèrence vers une vidéo OpenVeo est ajoutée à partir d\'un champ de formulaire sans que le champ ne soit défini ici, le player OpenVeo n\'apparaîtra pas. Chaque ligne représente un champ avec quatre colonnes : le composant créant le champ (component), la zone du fichier (filearea), l\'identifiant (itemid) ou la position de l\'identifiant associé et la position du chemin relatif du fichier (pathname). Les colonnes sont séparées par des barres verticales. Plus d\'informations disponibles sur <a href="https://github.com/veo-labs/openveo-moodle-player" target="_blank">la page du plugin</a>.';
 
 // Errors
-$string['mediaplayererror'] = 'La vidéo n\'a pu être affichée.';
+$string['errormediaplayer'] = 'La vidéo n\'a pu être affichée.';
 
 // Events
 $string['eventplayerdisplayfailed'] = 'Le media player OpenVeo n\'a pu être affiché.';

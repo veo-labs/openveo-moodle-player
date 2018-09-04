@@ -121,7 +121,7 @@ class openveo_media implements renderable, templatable {
         }
 
         if (!empty($data->error)) {
-            $data->errormessage = get_string('mediaplayererror', 'media_openveo');
+            $data->errormessage = get_string('errormediaplayer', 'media_openveo');
         } else {
             $data->iframe = true;
             $data->width = $this->width;
