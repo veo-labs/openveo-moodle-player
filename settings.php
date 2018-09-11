@@ -115,9 +115,6 @@ $settings->add(new admin_setting_configtextarea(
         // User: Administrator
         "grade|scale|pos0|pos1\n" .
 
-        // Verified (course > assignment > grade > grading method (marking guide) then course > assignment >
-        // define marking guide > description).
-
         // Prerequisites: Set course grading method to "marking guide" in course > assignment module > edition >
         //                grade > grading method
         // Field location: course > assignment module > define marking guide > description
