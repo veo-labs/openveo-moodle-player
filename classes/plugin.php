@@ -24,6 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+use core_form\filetypes_util;
 use media_openveo\output\openveo_media;
 use media_openveo\event\player_display_failed;
 
@@ -63,10 +64,45 @@ class media_openveo_plugin extends core_media_player_external {
     protected $filefields = array();
 
     /**
+     * Regular expression matching a Moodle media URL.
+     *
+     * @var string
+     */
+    protected $moodlemediaurlregex;
+
+    /**
+     * The list of extensions the player must look for in case of a Moodle media URL.
+     *
+     * @var array
+     */
+    protected $acceptedextensions;
+
+    /**
+     * An associative array storing the video id on OpenVeo corresponding to an URL. Only supported URLs are stored. Array keys are
+     * URLs and values are OpenVeo video ids.
+     *
+     * @var array
+     */
+    protected static $urlscache = array();
+
+    /**
      * Builds a new OpenVeo Media Player plugin.
      */
     public function __construct() {
+        global $CFG;
+        require_once($CFG->libdir . '/filelib.php');
+
+        $filetypesutil = new filetypes_util();
         $this->openveourl = new moodle_url(get_config('local_openveo_api', 'cdnurl'));
+
+        // Get the list of accepted file extensions from accepted types.
+        $acceptedtypes = $filetypesutil->normalize_file_types(get_config('media_openveo', 'acceptedtypes'));
+        $this->acceptedextensions = file_get_typegroup('extension', $acceptedtypes);
+
+        // Build a regular expression to match Moodle media URLs.
+        if (sizeof($this->acceptedextensions) > 0) {
+            $this->moodlemediaurlregex = str_replace('.', '\.', implode('|', $this->acceptedextensions));
+        }
 
         // Escape dots in OpenVeo host and use it to build a regular expression to match OpenVeo media URLs.
         $hostpattern = preg_replace('/\./', '\\.', $this->openveourl->get_host());
@@ -93,13 +129,14 @@ class media_openveo_plugin extends core_media_player_external {
      * Two kinds of URLs are supported by this media player:
      *
      * - OpenVeo URLs (e.g. https://openveo.test/publish/video/SycMFW--X)
-     * - Moodle file URLs with .openveo extension
-     *   (e.g. https://moodle.url/pluginfile.php/contextid/component/filearea/itemid/path/to/video.openveo)
+     * - Moodle file URLs with one of the extensions defined in configuration
+     *   (e.g. https://moodle.url/pluginfile.php/contextid/component/filearea/itemid/path/to/video.mp4). Only Moodle file URLs
+     *   corresponding to Moodle files associated to an OpenVeo repository will be treated.
      *
      * @return array Array of keywords to add to the embeddable markers list
      */
     public function get_embeddable_markers() : array {
-        return array($this->openveourl->get_host(), '.openveo');
+        return array_merge(array($this->openveourl->get_host()), $this->acceptedextensions);
     }
 
     /**
@@ -110,7 +147,7 @@ class media_openveo_plugin extends core_media_player_external {
      * @return array List of extensions
      */
     public function get_supported_extensions() : array {
-        return array('.openveo');
+        return $this->acceptedextensions;
     }
 
     /**
@@ -119,16 +156,196 @@ class media_openveo_plugin extends core_media_player_external {
      * Two kinds of URLs are supported by this media player:
      *
      * - OpenVeo URLs (e.g. https://openveo.test/publish/video/SycMFW--X)
-     * - Moodle file URLs with .openveo extension
-     *   (e.g. https://moodle.url/pluginfile.php/contextid/component/filearea/itemid/path/to/video.openveo)
+     * - Moodle file URLs with one of the extensions defined in configuration
+     *   (e.g. https://moodle.url/pluginfile.php/contextid/component/filearea/itemid/path/to/video.mp4). Only Moodle file URLs
+     *   corresponding to Moodle files associated to an OpenVeo repository will be treated.
      *
      * @return string The regular expression
      */
     protected function get_regex() : string {
+        if (!empty($this->moodlemediaurlregex)) {
 
-        // Match both OpenVeo URLs and Moodle file.
-        return "/{$this->openveomediaurlregex}|(?:\.openveo$)/";
+            // Match both OpenVeo URLs and Moodle file URLs.
+            return "/{$this->openveomediaurlregex}|(?:{$this->moodlemediaurlregex})$/";
 
+        } else {
+
+            // No video types configured.
+            // Match only OpenVeo URLs.
+            return "/{$this->openveomediaurlregex}$/";
+
+        }
+    }
+
+    /**
+     * Lists supported URLs.
+     *
+     * This is overriden from core_media_player_external as we need a more accurate verification mechanism than a regular expression.
+     * OpenVeo player supports OpenVeo URLs and Moodle file URLs using the configured list of extensions. The thing is that the
+     * OpenVeo player works with the same extensions as the other video players. Which means we can't base the verification on the
+     * URL extension. To find if a Moodle file URL is supported by the OpenVeo Media Player, the corresponding Moodle file must be
+     * associated to an OpenVeo Repository.
+     *
+     * @param array $urls The list of alternatives
+     * @param array $options A list of options (see OPTION_* constants). May contain, among other options, the
+     * original text being filtered
+     */
+    public function list_supported_urls(array $urls, array $options = array()) {
+
+        // OpenVeo player only works with a single url (there is no fallback).
+        if (count($urls) != 1) {
+            return array();
+        }
+
+        $url = reset($urls);
+        $fullurl = urldecode($url->out(false));
+
+        if (array_key_exists($fullurl, self::$urlscache)) {
+
+            // This URL has already been treated. We already have the corresponding OpenVeo video id. We know the URL supported.
+            return array($url);
+
+        }
+
+        if (preg_match($this->get_regex(), $fullurl)) {
+
+            // Find OpenVeo video id corresponding to the URL.
+            $openveovideoid = $this->get_openveo_video_id($fullurl);
+            if (isset($openveovideoid)) {
+                self::$urlscache[$fullurl] = $openveovideoid;
+                return array($url);
+            }
+
+        }
+
+        return array();
+    }
+
+    /**
+     * Gets OpenVeo video id corresponding to an OpenVeo URL or Moodle file URL.
+     *
+     * @param string $url The URL to analyze
+     * @return string The OpenVeo video id or null if not found
+     */
+    protected function get_openveo_video_id(string $url) {
+        $filestorage = get_file_storage();
+
+        if (preg_match(
+                '/pluginfile\.php\/' .
+                '([^\/]+)\/' . // contextid
+                '([^\/]+)\/' . // component
+                '([^\/]+)\/' . // filearea
+                '(.*)$/', // pathname + filename
+                $url,
+                $matches
+            )
+        ) {
+
+            // URL is a Moodle URL
+            // (e.g. https://moodle.url/pluginfile.php/contextid/component/filearea/itemid/path/to/video.mp4).
+            // Find each part of the URL (contextid, component, filearea, itemid, pathname and filename). to be able
+            // to retrieve the Moodle file and thus its associated OpenVeo media id.
+
+            $contextid = $matches[1];
+            $component = $matches[2];
+            $filearea = $matches[3];
+
+            if (!array_key_exists($component . '/' . $filearea, $this->filefields)) {
+
+                // This file field is not in OpenVeo Media Player configuration thus it should be ignored.
+                return null;
+
+            }
+
+            // File field is supported, information about where to get itemid and pathname can be retrieved from
+            // configuration.
+
+            $filefield = $this->filefields[$component . '/' . $filearea];
+
+            if (strpos($filefield['itemid'], 'id') !== false) {
+
+                // itemid is static and is not part of the URL.
+
+                // Pick itemid from configuration.
+                $itemid = str_replace('id', '', $filefield['itemid']);
+
+            } else {
+
+                // itemid is dynamic and is part of the URL.
+
+                // Pick itemid position from configuration.
+                $itemidposition = intval(str_replace('pos', '', $filefield['itemid']));
+
+                // Find itemid from the URL using position.
+                preg_match('/(?:[^\/]+\/){' . $itemidposition . '}([^\/]+)/', "$matches[4]", $lastpartmatches);
+                $itemid = $lastpartmatches[1];
+
+            }
+
+            // Pick pathname position from configuration.
+            $pathnameposition = intval(str_replace('pos', '', $filefield['pathname']));
+
+            // Find pathname and filename from the URL using pathname position.
+            preg_match(
+                    '/(?:[^\/]+\/){' . $pathnameposition . '}((?:[^\/]+\/)*)(.*(?:' . $this->moodlemediaurlregex . '))$/',
+                    $matches[4],
+                    $lastpartmatches2
+            );
+            $pathname = '/' . trim($lastpartmatches2[1], '/');
+            $filename = $lastpartmatches2[2];
+
+            // Find the Moodle file corresponding to the file with the contextid, component, filearea, itemid,
+            // pathname and filename.
+            $file = $filestorage->get_file($contextid, $component, $filearea, $itemid, $pathname, $filename);
+
+            // Get OpenVeo media id.
+            if (!empty($file)) {
+                return ($file->get_repository_type() !== 'openveo') ? null : $file->get_source();
+            }
+
+        } else if (preg_match(
+                '/draftfile\.php\/' .
+                '([^\/]+)\/' . // contextid
+                'user\/draft\/' .
+                '([^\/]+)\/' . // draftid
+                '(.*)$/', // pathname + filename
+                $url,
+                $matches
+            )
+        ) {
+
+            // URL is a Moodle draft URL
+            // (e.g. https://moodle.url/draftfile.php/contextid/user/draft/itemid/path/to/video.mp4).
+            // find each part of the URL (contextid, itemid, pathname and filename).
+
+            $contextid = $matches[1];
+            $component = 'user';
+            $filearea = 'draft';
+            $itemid = $matches[2];
+
+            // Find pathname and filename from URL.
+            preg_match("/(.*)\/(.*{$this->moodlemediaurlregex})$/", "/$matches[3]", $lastpartmatches);
+            $pathname = (!empty($lastpartmatches[1])) ? $lastpartmatches[1] : '/';
+            $filename = $lastpartmatches[2];
+
+            // Find the Moodle file corresponding to the file with the contextid, component, filearea, itemid,
+            // pathname and filename.
+            $file = $filestorage->get_file($contextid, $component, $filearea, $itemid, $pathname, $filename);
+
+            // Get OpenVeo media id.
+            if (!empty($file)) {
+                return ($file->get_repository_type() !== 'openveo') ? null : unserialize($file->get_source())->source;
+            }
+
+        } else if (preg_match("/$this->openveomediaurlregex/", $url, $matches)) {
+
+            // URL is already an OpenVeo media URL (e.g. https://openveo.test/publish/video/SycMFW--X).
+
+            return $matches[1];
+
+        }
+
+        return null;
     }
 
     /**
@@ -146,7 +363,6 @@ class media_openveo_plugin extends core_media_player_external {
         global $PAGE;
         global $CFG;
 
-        $filestorage = get_file_storage();
         $fullurl = urldecode($url->out(false));
         $openveourl = rtrim($this->openveourl->out_omit_querystring(), '/');
 
@@ -168,152 +384,7 @@ class media_openveo_plugin extends core_media_player_external {
         $width = !empty($width) ? $width : $CFG->media_default_width;
         $height = !empty($height) ? $height : $CFG->media_default_height;
         $autoplay = isset($autoplay) ? true : false;
-        $id = null;
-
-        if (preg_match(
-                '/pluginfile\.php\/' .
-                '([^\/]+)\/' . // contextid
-                '([^\/]+)\/' . // component
-                '([^\/]+)\/' . // filearea
-                '(.*)$/', // pathname + filename
-                $fullurl,
-                $matches
-            )
-        ) {
-
-            // URL is a Moodle URL
-            // (e.g. https://moodle.url/pluginfile.php/contextid/component/filearea/itemid/path/to/video.openveo).
-            // Find each part of the URL (contextid, component, filearea, itemid, pathname and filename). to be able
-            // to retrieve the Moodle file and thus its associated OpenVeo media id.
-
-            $contextid = $matches[1];
-            $component = $matches[2];
-            $filearea = $matches[3];
-
-            if (!array_key_exists($component . '/' . $filearea, $this->filefields)) {
-
-                // This file field is not in OpenVeo Media Player configuration thus it should be ignored.
-
-                $this->send_player_display_failed_event(
-                        "File field with URL $fullurl is not supported by the OpenVeo Media Player. " .
-                        "You might want to add it to the file fields configuration."
-                );
-
-                if (isset($options[core_media_manager::OPTION_ORIGINAL_TEXT])) {
-
-                    // An original text exists, calls must come from a filter.
-                    // Just return the original text without any modification.
-
-                    return $options[core_media_manager::OPTION_ORIGINAL_TEXT];
-
-                } else {
-
-                    // No original text, caller expects a media player to play an URL.
-                    // Just let openveo_media display the error message.
-
-                }
-            } else {
-
-                // File field is supported, information about where to get itemid and pathname can be retrieved from
-                // configuration.
-
-                $filefield = $this->filefields[$component . '/' . $filearea];
-
-                if (strpos($filefield['itemid'], 'id') !== false) {
-
-                    // itemid is static and is not part of the URL.
-
-                    // Pick itemid from configuration.
-                    $itemid = str_replace('id', '', $filefield['itemid']);
-
-                } else {
-
-                    // itemid is dynamic and is part of the URL.
-
-                    // Pick itemid position from configuration.
-                    $itemidposition = intval(str_replace('pos', '', $filefield['itemid']));
-
-                    // Find itemid from the URL using position.
-                    preg_match('/(?:[^\/]+\/){' . $itemidposition . '}([^\/]+)/', "$matches[4]", $lastpartmatches);
-                    $itemid = $lastpartmatches[1];
-
-                }
-
-                // Pick pathname position from configuration.
-                $pathnameposition = intval(str_replace('pos', '', $filefield['pathname']));
-
-                // Find pathname and filename from the URL using pathname position.
-                preg_match(
-                        '/(?:[^\/]+\/){' . $pathnameposition . '}((?:[^\/]+\/)*)(.*\.openveo)$/',
-                        $matches[4],
-                        $lastpartmatches2
-                );
-                $pathname = '/' . trim($lastpartmatches2[1], '/');
-                $filename = $lastpartmatches2[2];
-
-            }
-
-            // Find the Moodle file corresponding to the file with the contextid, component, filearea, itemid,
-            // pathname and filename.
-            $file = $filestorage->get_file($contextid, $component, $filearea, $itemid, $pathname, $filename);
-
-            // Get OpenVeo media id.
-            if (!empty($file)) {
-                $id = $file->get_source();
-            }
-
-        } else if (preg_match(
-                '/draftfile\.php\/' .
-                '([^\/]+)\/' . // contextid
-                'user\/draft\/' .
-                '([^\/]+)\/' . // draftid
-                '(.*)$/', // pathname + filename
-                $fullurl,
-                $matches
-            )
-        ) {
-
-            // URL is a Moodle draft URL
-            // (e.g. https://moodle.url/draftfile.php/contextid/user/draft/itemid/path/to/video.openveo).
-            // find each part of the URL (contextid, itemid, pathname and filename).
-
-            $contextid = $matches[1];
-            $component = 'user';
-            $filearea = 'draft';
-            $itemid = $matches[2];
-
-            // Find pathname and filename from URL.
-            preg_match("/(.*)\/(.*\.openveo)$/", "/$matches[3]", $lastpartmatches);
-            $pathname = (!empty($lastpartmatches[1])) ? $lastpartmatches[1] : '/';
-            $filename = $lastpartmatches[2];
-
-            // Find the Moodle file corresponding to the file with the contextid, component, filearea, itemid,
-            // pathname and filename.
-            $file = $filestorage->get_file($contextid, $component, $filearea, $itemid, $pathname, $filename);
-
-            // Get OpenVeo media id.
-            if (!empty($file)) {
-                $id = unserialize($file->get_source())->source;
-            }
-
-        } else if (preg_match("/$this->openveomediaurlregex/", $fullurl, $matches)) {
-
-            // URL is already an OpenVeo media URL (e.g. https://openveo.test/publish/video/SycMFW--X).
-
-            $id = $matches[1];
-
-        }
-
-        if (empty($id)) {
-
-            // OpenVeo media id has not been found for this file reference.
-            // Send an event and let openveo_media display an error.
-
-            $this->send_player_display_failed_event(
-                    "OpenVeo media id has not been found for the file reference: $fullurl."
-            );
-
-        }
+        $id = self::$urlscache[$fullurl];
 
         $media = new openveo_media($id, $width, $height, $openveourl, current_language(), $autoplay);
         $renderer = $PAGE->get_renderer('media_openveo');

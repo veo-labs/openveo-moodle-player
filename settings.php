@@ -15,7 +15,7 @@
 // along with Moodle. If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Defines plugin settings page.
+ * Adds fields to the player settings page.
  *
  * @package media_openveo
  * @copyright 2018 Veo-labs
@@ -23,6 +23,17 @@
  */
 
 defined('MOODLE_INTERNAL') || die();
+
+// Accepted video types.
+// The list of file types the OpenVeo Moodle Player must play.
+$settings->add(new admin_setting_filetypes(
+        'media_openveo/acceptedtypes',
+        get_string('settingsacceptedtypeslabel', 'media_openveo', null, true),
+        get_string('settingsacceptedtypesdescription', 'media_openveo'),
+        '.mp4',
+        array('onlytypes' => ['video']),
+        PARAM_RAW_TRIMMED
+));
 
 // File fields within Moodle.
 // Defaults are file fields defined in a native Moodle installation.
@@ -36,7 +47,7 @@ defined('MOODLE_INTERNAL') || die();
 // Position indicates the position of a parameter in the URL. Position is the index of the parameter in the list
 // of parameters. Positions start at 0 and correspond to the parameter right after the filearea. Position 1
 // will be the next parameter, position 2 the third parameter and so on...
-// [...]/component/filearea/parameter0/parameter1/parameter2/parameter3/parameter4/file.openveo
+// [...]/component/filearea/parameter0/parameter1/parameter2/parameter3/parameter4/file.mp4
 //                            [pos0]     [pos1]     [pos2]     [pos3]      [pos4]     [pos5]
 $settings->add(new admin_setting_configtextarea(
         'media_openveo/filefields',
@@ -81,7 +92,7 @@ $settings->add(new admin_setting_configtextarea(
         // User: Administrator for the prerequisites and enrolled user for edition and display
         "core_competency|userevidence|pos0|pos1\n" .
 
-        // Prerequisites: Authorize .openveo files in administration > appearance > courses > course summary files
+        // Prerequisites: Authorize .mp4 files in administration > appearance > courses > course summary files
         //                extensions
         // Field location: course > edition > course summary files
         // Display location: category holding the course
@@ -405,3 +416,4 @@ $settings->add(new admin_setting_configtextarea(
 
         PARAM_RAW_TRIMMED
 ));
+
