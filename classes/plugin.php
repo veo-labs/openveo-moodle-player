@@ -394,12 +394,12 @@ class media_openveo_plugin extends core_media_player_external {
     /**
      * Gets the rank of this player regarding other players.
      *
-     * As OpenVeo Media Player supports only .openveo files it does not have to be prior to other players.
+     * As OpenVeo Media Player supports the same files as the videojs player it has to be prior to it.
      *
      * @return int Rank (higher is better)
      */
     public function get_rank() : int {
-        return 0;
+        return 2001;
     }
 
     /**
