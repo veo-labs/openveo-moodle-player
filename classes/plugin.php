@@ -95,8 +95,8 @@ class media_openveo_plugin extends core_media_player_external {
         $filetypesutil = new filetypes_util();
         $this->openveourl = new moodle_url(get_config('local_openveo_api', 'cdnurl'));
 
-        // Get the list of accepted file extensions from accepted types.
-        $acceptedtypes = $filetypesutil->normalize_file_types(get_config('media_openveo', 'acceptedtypes'));
+        // Get the list of accepted file extensions from accepted types defined in OpenVeo Repository.
+        $acceptedtypes = $filetypesutil->normalize_file_types(get_config('openveo', 'supportedfiletypes'));
         $this->acceptedextensions = file_get_typegroup('extension', $acceptedtypes);
 
         // Build a regular expression to match Moodle media URLs.

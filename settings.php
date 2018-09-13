@@ -24,17 +24,6 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-// Accepted video types.
-// The list of file types the OpenVeo Moodle Player must play.
-$settings->add(new admin_setting_filetypes(
-        'media_openveo/acceptedtypes',
-        get_string('settingsacceptedtypeslabel', 'media_openveo', null, true),
-        get_string('settingsacceptedtypesdescription', 'media_openveo'),
-        '.mp4',
-        array('onlytypes' => ['video']),
-        PARAM_RAW_TRIMMED
-));
-
 // File fields within Moodle.
 // Defaults are file fields defined in a native Moodle installation.
 //

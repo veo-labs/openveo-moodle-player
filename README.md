@@ -10,7 +10,9 @@ OpenVeo Moodle Player is a Moodle Media Player plugin which transforms video ref
 - [Openveo](https://github.com/veo-labs/openveo-core) >=5.1.1
 - [Openveo Publish plugin](https://github.com/veo-labs/openveo-publish) >=7.1.0
 - [OpenVeo Moodle API plugin](https://github.com/veo-labs/openveo-moodle-api) >=1.0.0
+- [OpenVeo Moodle Repository plugin](https://github.com/veo-labs/openveo-moodle-repository) >=1.0.0
 - Make sure OpenVeo Moodle API plugin is configured
+- Make sure OpenVeo Moodle Repository plugin is configured
 - Make sure **Multimedia plugins** filter plugin is enabled (**Plugins > Filters > Manage filters > Multimedia plugins**)
 
 ## Installation
@@ -32,9 +34,9 @@ If the video is displayed and can be played using another player, it means the v
 
 ## Video can't be played
 
-Another player is loaded and can't play the video. Other players can't play OpenVeo videos. If video was added using the [OpenVeo Moodle Repository](https://github.com/veo-labs/openveo-moodle-repository) it could be a result of the priority of players. As administrator go to **Site administration > Plugins > Media players > Manage media players**. Check that OpenVeo Moodle Player is enabled and on top of all other players.
+Another player is loaded and can't play the video. Other players can't play OpenVeo videos. If video was added using the [OpenVeo Moodle Repository](https://github.com/veo-labs/openveo-moodle-repository) it could be a result of the priority of players. As administrator go to **Site administration > Plugins > Media players > Manage media players** and check that OpenVeo Moodle Player is enabled and on top of all other players.
 
-If the problem persists go to **Site administration > Plugins > Media players > OpenVeo Player** and check that the extension of the video is listed in the supported types. If not add it.
+If the problem persists go to **Site administration > Plugins > Repositories > OpenVeo Repository** and check that the extension of the video is listed in the supported types. If not add it.
 
 If the problem still persists, maybe you installed non-native plugins which make use of Moodle Form API with "editor" or "filemanager" fields, videos added through these plugins might not be known by OpenVeo Moodle Player. OpenVeo videos added through the OpenVeo Repository can be directly OpenVeo links or Moodle file references. In case of Moodle file references, OpenVeo Moodle Player transforms Moodle URLs (e.g. **[...]/pluginfile.php/contextid/component/filearea/itemid/path/to/the/video.mp4**) into a player. The fact is that a Moodle URL, sometimes, doesn't contain enough information to find the original file. To be able to find an original file we need its context (**contextid**), the plugin which holds it (**component**), the name of the area (**filearea**) it belongs to and an identifier (**itemid**) related to the area. The context, the plugin name and the area are always specified in Moodle URLs but not the identifier. This identifier is specific for each form field of type **editor** or **filemanager**, sometimes it is specified in the Moodle URL, sometimes it isn't. Consequently, for each usage of a form field of type **editor** or **filemanager**, OpenVeo Moodle Player needs to know where to get the identifier, is it in the Moodle URL? Is is hardcoded? If it is in the Moodle URL, where is it located?
 
