@@ -15,7 +15,7 @@
     along with Moodle. If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template media_openveo/openveo_media
+    @template media_openveo/player
 
     OpenVeo Media Player template to display a media using the OpenVeo Player.
 
@@ -41,10 +41,11 @@
         "errormessage": "Something went wrong"
     }
 }}
-
-{{#iframe}}
-    <iframe width="{{width}}" height="{{height}}" src="{{url}}" frameborder="0" allowfullscreen></iframe>
-{{/iframe}}
-{{#error}}
-    <p>{{errormessage}}</p>
-{{/error}}
+<div class="media-openveo-player">
+    {{#iframe}}
+        <iframe width="{{width}}" height="{{height}}" src="{{url}}" frameborder="0" allowfullscreen></iframe>
+    {{/iframe}}
+    {{#error}}
+        <p>{{errormessage}}</p>
+    {{/error}}
+</div>

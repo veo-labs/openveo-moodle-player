@@ -46,7 +46,7 @@ class renderer extends plugin_renderer_base {
      */
     public function render_openveo_media(openveo_media $media) : string {
         $data = $media->export_for_template($this);
-        return parent::render_from_template('media_openveo/openveo_media', $data);
+        return parent::render_from_template('media_openveo/player', $data);
     }
 
 }
