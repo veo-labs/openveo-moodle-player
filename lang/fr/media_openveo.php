@@ -22,7 +22,7 @@
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-// Plugin name displayed in settings
+// Plugin name and help displayed in settings
 $string['pluginname'] = 'OpenVeo Player';
 $string['pluginname_help'] = 'Lit les vidéos d\'OpenVeo Publish en utilisant l\'OpenVeo Player.';
 
