@@ -230,7 +230,7 @@ $settings->add(new admin_setting_configtextarea(
         // User: Course editor
         "mod_label|intro|id0|pos0\n" .
 
-        // Field location: course > lesson module > grade essays > click on the data of an essay > your comments
+        // Field location: course > lesson module > grade essays > click on the date of an essay > your comments
         // Display location: It doesn't seem to be displayed
         // User: Course editor
         "mod_lesson|essay_responses|pos0|pos1\n" .
