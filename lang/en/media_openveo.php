@@ -22,20 +22,20 @@
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-// Plugin name and help displayed in settings
+// Plugin name and help displayed in settings.
 $string['pluginname'] = 'OpenVeo Player';
 $string['pluginname_help'] = 'Read videos from OpenVeo Publish using the OpenVeo Player.';
 
-// Privacy (GDPR)
+// Privacy (GDPR).
 $string['privacy:metadata'] = 'The plugin OpenVeo Player does not store or transmit any personal data.';
 
-// Settings
+// Settings.
 $string['settingsfilefieldslabel'] = 'File fields';
 $string['settingsfilefieldsdescription'] = 'The list of fields of type "editor" and "filemanager" used to upload files. If a reference to an OpenVeo video is added from a field not defined in here, the OpenVeo player won\'t appear. Each line represents a field with four columns: the component holding the field (component), the file area (filearea), the identifier (itemid) or position of the identifier and the position of the file path. Columns are separated by pipes. More information available on <a href="https://github.com/veo-labs/openveo-moodle-player" target="_blank">plugin\'s page</a>.';
 $string['settingssubmitlabel'] = 'Save changes';
 
-// Errors
+// Errors.
 $string['errormediaplayer'] = 'The video couln\'t be displayed.';
 
-// Events
+// Events.
 $string['eventplayerdisplayfailed'] = 'OpenVeo media player couldn\'t be displayed.';
