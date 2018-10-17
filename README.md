@@ -6,6 +6,7 @@ OpenVeo Moodle Player is a Moodle Media Player plugin which transforms video ref
 
 ## Prerequisites
 
+- PHP >=7
 - Moodle version >=3.4.0
 - [Openveo](https://github.com/veo-labs/openveo-core) >=5.1.1
 - [Openveo Publish plugin](https://github.com/veo-labs/openveo-publish) >=7.1.0
