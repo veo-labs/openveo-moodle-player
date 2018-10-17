@@ -25,11 +25,11 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'media_openveo';
-$plugin->version = 2018082700;
+$plugin->version = 2018101700;
 $plugin->requires = 2017111300;
 $plugin->maturity = MATURITY_STABLE;
 $plugin->release = '1.0.0';
 $plugin->dependencies = array(
-    'local_openveo_api' => 2018073100,
-    'repository_openveo' => 2018073100
+    'local_openveo_api' => 2018101700,
+    'repository_openveo' => 2018101700
 );
